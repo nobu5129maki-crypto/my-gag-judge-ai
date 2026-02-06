@@ -31,8 +31,8 @@
             const [judgement, setJudgement] = useState(null);
             const [error, setError] = useState(null);
 
-            // 修正ポイント：APIキーの前後を必ず半角のダブルクォーテーションで囲んでください
-            const API_KEY = "AIzaSyC5yGH7v_e2GBx-RXG0aQss-j9L6xTy9wA";
+            // 【重要】ここに新しいAPIキーを直接貼り付けてください（前後を "" で囲む）
+            const API_KEY = "AIzaSyDq9jo6c9wY1d625Lj23R24_7Vjr7pr0Gw";
 
             const judgeGag = async () => {
                 if (!gagInput.trim() || isJudging) return;
@@ -41,26 +41,41 @@
                 setJudgement(null);
 
                 try {
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+                    // APIキーが空文字の場合のチェック
+                    if (!API_KEY || API_KEY.startsWith("AIza") === false) {
+                        throw new Error("有効なAPIキーが設定されていません。");
+                    }
+
+                    // モデル名を 2.5-flash-preview にアップグレードして精度を向上
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
+                    
                     const response = await fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            contents: [{ parts: [{ text: `審査対象: ${gagInput}` }] }],
+                            contents: [{ parts: [{ text: `以下のネタを審査し、お笑い審査員として回答してください。ネタ: ${gagInput}` }] }],
                             systemInstruction: { 
-                                parts: [{ text: "あなたはプロのお笑い審査員です。JSON形式で回答してください：{ \"rank\": \"S/A/B/C/D\", \"score\": 0-100, \"critique\": \"寸評\", \"catchphrase\": \"二つ名\" }" }] 
+                                parts: [{ text: "あなたはプロのお笑い審査員です。必ず以下のJSON形式のみで回答してください。：{ \"rank\": \"S/A/B/C/D\", \"score\": 0-100, \"critique\": \"寸評\", \"catchphrase\": \"二つ名\" }" }] 
                             },
-                            generationConfig: { responseMimeType: "application/json" }
+                            generationConfig: { 
+                                responseMimeType: "application/json",
+                                temperature: 0.7
+                            }
                         })
                     });
                     
                     const data = await response.json();
-                    if (!response.ok) throw new Error(data.error?.message || "API通信エラー");
-                    const result = JSON.parse(data.candidates[0].content.parts[0].text);
+                    
+                    if (!response.ok) {
+                        throw new Error(data.error?.message || "通信エラーが発生しました");
+                    }
+
+                    const resultText = data.candidates[0].content.parts[0].text;
+                    const result = JSON.parse(resultText);
                     setJudgement(result);
                 } catch (err) {
-                    setError("審査中にエラーが発生しました。");
-                    console.error(err);
+                    setError(err.message);
+                    console.error("Judge Error:", err);
                 } finally {
                     setIsJudging(false);
                 }
@@ -86,7 +101,14 @@
                         >
                             {isJudging ? "審査中..." : "AIに審査してもらう"}
                         </button>
-                        {error && <div className="text-red-500 text-center font-bold">⚠️ {error}</div>}
+                        
+                        {error && (
+                            <div className="bg-red-50 border-2 border-red-200 text-red-600 p-4 rounded-2xl text-sm font-bold">
+                                ⚠️ 審査エラー：<br/>
+                                <span className="font-normal">{error}</span>
+                            </div>
+                        )}
+
                         {judgement && (
                             <div className="animate-pop p-6 border-4 border-orange-500 rounded-[2rem] text-center space-y-4 bg-white">
                                 <div className="text-xs font-bold text-orange-500 tracking-widest">{judgement.catchphrase}</div>
@@ -96,6 +118,9 @@
                             </div>
                         )}
                     </main>
+                    <footer className="mt-auto p-6 text-center text-slate-400 text-xs">
+                        © AI Comedy Judge
+                    </footer>
                 </div>
             );
         };
