@@ -5,19 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AIお笑い審査員 - Official</title>
     
-    <!-- ホーム画面に追加した際のアイコン設定 -->
+    <!-- ホーム画面追加時の設定 -->
     <link rel="apple-touch-icon" href="icon.svg">
     <link rel="icon" type="image/svg+xml" href="icon.svg">
-    <!-- Android/Chrome用の設定 -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="AI審査員">
-    <link rel="manifest" href="data:application/json,{'name':'AIお笑い審査員','short_name':'AI審査員','icons':[{'src':'icon.svg','sizes':'512x512','type':'image/svg+xml'}],'start_url':'.','display':'standalone'}">
-
+    
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @keyframes bounce-short { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
         .animate-bounce-short { animation: bounce-short 0.5s ease-in-out; }
@@ -35,17 +32,11 @@
             const [judgement, setJudgement] = useState(null);
             const [error, setError] = useState(null);
 
-            // APIキーを環境変数から取得するロジック
-            // Vercelデプロイ時にビルド設定で環境変数が注入されることを前提とします
+            // APIキーを取得（Vercelの環境変数から動的に注入されるのを待ちます）
             const getApiKey = () => {
-                try {
-                    // REACT_APP_... という接頭辞はReactアプリで一般的な慣習です
-                    return (typeof process !== 'undefined' && process.env.REACT_APP_GEMINI_API_KEY) || 
-                           window.REACT_APP_GEMINI_API_KEY || 
-                           "";
-                } catch (e) {
-                    return "";
-                }
+                return (typeof process !== 'undefined' && process.env.REACT_APP_GEMINI_API_KEY) || 
+                       window.REACT_APP_GEMINI_API_KEY || 
+                       "";
             };
 
             const judgeGag = async () => {
@@ -54,7 +45,7 @@
                 const apiKey = getApiKey();
                 
                 if (!apiKey) {
-                    setError("APIキーが設定されていません。Vercelの管理画面で REACT_APP_GEMINI_API_KEY を設定し、再デプロイしてください。");
+                    setError("APIキーが設定されていません。VercelのEnvironment Variablesを確認し、Redeployしてください。");
                     return;
                 }
 
@@ -66,7 +57,7 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             contents: [{ parts: [{ text: `審査対象: ${gagInput}` }] }],
-                            systemInstruction: { parts: [{ text: `あなたは伝説のお笑いプロデューサーです。JSONで返してください：{ "rank": "S/A/B/C/D", "score": 0-100, "critique": "解説", "catchphrase": "コピー" }` }] },
+                            systemInstruction: { parts: [{ text: `あなたはプロのお笑い審査員です。JSONで返してください：{ "rank": "S/A/B/C/D", "score": 0-100, "critique": "寸評", "catchphrase": "コピー" }` }] },
                             generationConfig: { responseMimeType: "application/json" }
                         })
                     });
@@ -77,13 +68,14 @@
                     const result = JSON.parse(data.candidates[0].content.parts[0].text);
                     setJudgement(result);
                 } catch (err) {
-                    setError("審査に失敗しました。APIキーの有効性やVercelの設定を確認してください。");
+                    setError("審査に失敗しました。設定画面でAPIキーが正しく保存されているか確認してください。");
                 } finally { setIsJudging(false); }
             };
 
             return (
                 <div className="min-h-screen pb-12 font-sans">
-                    <header className="bg-white border-b p-4 text-center shadow-sm">
+                    <header className="bg-white border-b p-4 text-center shadow-sm flex justify-center items-center gap-2">
+                        <img src="icon.svg" className="w-8 h-8" alt="logo" />
                         <h1 className="text-xl font-bold text-orange-600">AIお笑い審査員</h1>
                     </header>
                     <main className="max-w-2xl mx-auto px-4 mt-8 space-y-6">
@@ -99,10 +91,10 @@
                                 disabled={isJudging || !gagInput.trim()}
                                 className="w-full mt-4 bg-orange-500 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-orange-600 active:scale-95 transition-all"
                             >
-                                {isJudging ? "審査中..." : "AIに審査してもらう"}
+                                {isJudging ? "AI審査中..." : "AIに審査してもらう"}
                             </button>
                         </div>
-                        {error && <div className="text-red-500 text-center bg-red-50 p-4 rounded-xl border border-red-100">{error}</div>}
+                        {error && <div className="text-red-500 text-center bg-red-50 p-4 rounded-xl border border-red-100 font-bold">{error}</div>}
                         {judgement && (
                             <div className="bg-white rounded-2xl shadow-xl border-2 border-orange-500 overflow-hidden animate-bounce-short">
                                 <div className="bg-orange-500 p-2 text-white font-bold text-center italic text-xs uppercase">
