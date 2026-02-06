@@ -44,8 +44,9 @@
                         throw new Error("APIキーが正しく入力されていません。");
                     }
 
-                    // モデル名とエンドポイントを v1beta に戻してJSONモードを使用可能にする
-                    const modelName = "gemini-1.5-flash"; 
+                    // モデル名をより具体的なバージョン番号付きに変更
+                    // gemini-1.5-flash ではなく、確実に存在する特定のバージョンを指定
+                    const modelName = "gemini-1.5-flash-002"; 
                     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_KEY}`;
                     
                     const response = await fetch(url, {
@@ -77,6 +78,7 @@
                     if (!response.ok) {
                         const errMsg = data.error?.message || "通信エラー";
                         const errReason = data.error?.status || "Unknown";
+                        // NOT_FOUNDが出る場合はモデル名の不一致
                         throw new Error(`${errMsg} (${errReason})`);
                     }
 
@@ -94,7 +96,7 @@
                     <header className="bg-orange-600 text-white p-8 pt-12 rounded-b-[3rem] text-center shadow-lg">
                         <div className="text-5xl mb-2">🎙️</div>
                         <h1 className="text-2xl font-black italic tracking-tighter">AIお笑い審査員</h1>
-                        <p className="text-xs opacity-80 mt-1 uppercase tracking-widest">Beta Mode Fixed</p>
+                        <p className="text-xs opacity-80 mt-1 uppercase tracking-widest">Version 1.5.2 Patch</p>
                     </header>
                     <main className="p-6 space-y-6">
                         <textarea
@@ -114,7 +116,9 @@
                         {error && (
                             <div className="bg-red-50 border-2 border-red-200 text-red-600 p-4 rounded-2xl text-xs font-bold leading-relaxed">
                                 ⚠️ エラー：<br/>{error}<br/><br/>
-                                <span className="opacity-70 font-normal underline">Google AI Studio で API Key の制限（API restrictions）がかかっていないか確認してください。</span>
+                                <span className="opacity-70 font-normal underline">
+                                    もしNOT_FOUNDが消えない場合は、Google AI Studioの左側メニュー「Model settings」から、使用可能なモデルの一覧を確認してください。
+                                </span>
                             </div>
                         )}
 
@@ -131,7 +135,7 @@
                         )}
                     </main>
                     <footer className="mt-auto p-6 text-center text-slate-400 text-[10px] tracking-widest uppercase">
-                        © 2024 AI Comedy Judge - Beta Fix
+                        © 2024 AI Comedy Judge - Patch Applied
                     </footer>
                 </div>
             );
