@@ -39,8 +39,9 @@
             const judgeGag = async () => {
                 if (!gagInput.trim() || isJudging) return;
                 setIsJudging(true);
-                setError(null);
+                setError(null);  
 
+                
                 // もしAPI_KEYが空の場合、Vercelの環境変数を探しに行きます
                 const finalKey = API_KEY || (typeof process !== "undefined" ? process.env.REACT_APP_GEMINI_API_KEY : "");
 
