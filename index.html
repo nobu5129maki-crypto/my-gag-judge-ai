@@ -31,7 +31,7 @@
             const [judgement, setJudgement] = useState(null);
             const [error, setError] = useState(null);
 
-            // 直接キーを埋め込む箇所（Redeployを忘れずに！）
+            // 直接キーを埋め込む箇所
             const API_KEY = "AIzaSyC5yGH7v_e2GBx-RXG0aQss-j9L6xTy9wA"; 
 
             const judgeGag = async () => {
@@ -40,28 +40,35 @@
                 setError(null);
 
                 try {
-                    if (!API_KEY || API_KEY === "") {
-                        throw new Error("APIキーが設定されていません。");
+                    if (!API_KEY || API_KEY === "" || API_KEY.includes("ここに")) {
+                        throw new Error("APIキーが正しく入力されていません。");
                     }
 
-                    // モデル名を確実に認識される形式に変更
-                    const modelName = "gemini-1.5-flash-latest";
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_KEY}`;
+                    // モデル名から -latest や v1beta 固有の修飾子を外した標準的な指定に変更
+                    const modelName = "gemini-1.5-flash"; 
+                    // エンドポイントを v1beta ではなく v1 に変更（より安定したアクセス）
+                    const url = `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${API_KEY}`;
                     
                     const response = await fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             contents: [{ 
-                                role: "user",
-                                parts: [{ text: `以下のネタをプロの審査員として評価し、JSONのみで答えてください。ネタ: ${gagInput}` }] 
+                                parts: [{ text: `あなたはプロのお笑い審査員です。以下のネタを評価し、指定のJSON形式のみで返答してください。それ以外の挨拶や説明は一切不要です。\n\nネタ：${gagInput}` }] 
                             }],
-                            systemInstruction: { 
-                                parts: [{ text: "あなたはプロのお笑い審査員です。必ず以下のJSONのみを返してください。それ以外の文字は一切含めないでください。：{ \"rank\": \"S/A/B/C/D\", \"score\": 0-100, \"critique\": \"30文字以内の寸評\", \"catchphrase\": \"10文字以内の二つ名\" }" }] 
-                            },
                             generationConfig: { 
                                 responseMimeType: "application/json",
-                                temperature: 0.9
+                                responseSchema: {
+                                    type: "OBJECT",
+                                    properties: {
+                                        rank: { type: "STRING", enum: ["S", "A", "B", "C", "D"] },
+                                        score: { type: "NUMBER" },
+                                        critique: { type: "STRING" },
+                                        catchphrase: { type: "STRING" }
+                                    },
+                                    required: ["rank", "score", "critique", "catchphrase"]
+                                },
+                                temperature: 0.7
                             }
                         })
                     });
@@ -69,10 +76,9 @@
                     const data = await response.json();
                     
                     if (!response.ok) {
-                        // 具体的なエラーコードやメッセージを表示するように強化
                         const errMsg = data.error?.message || "通信エラー";
-                        const errCode = data.error?.status || "Unknown";
-                        throw new Error(`${errMsg} (${errCode})`);
+                        const errReason = data.error?.status || "Unknown";
+                        throw new Error(`${errMsg} (${errReason})`);
                     }
 
                     const resultText = data.candidates[0].content.parts[0].text;
@@ -89,7 +95,7 @@
                     <header className="bg-orange-600 text-white p-8 pt-12 rounded-b-[3rem] text-center shadow-lg">
                         <div className="text-5xl mb-2">🎙️</div>
                         <h1 className="text-2xl font-black italic tracking-tighter">AIお笑い審査員</h1>
-                        <p className="text-xs opacity-80 mt-1 uppercase tracking-widest">Final Version</p>
+                        <p className="text-xs opacity-80 mt-1 uppercase tracking-widest">Stable Version</p>
                     </header>
                     <main className="p-6 space-y-6">
                         <textarea
@@ -108,8 +114,8 @@
                         
                         {error && (
                             <div className="bg-red-50 border-2 border-red-200 text-red-600 p-4 rounded-2xl text-xs font-bold leading-relaxed">
-                                ⚠️ エラー発生：<br/>{error}<br/><br/>
-                                <span className="opacity-70 font-normal">※APIキーの権限不足か、モデル名が利用できない可能性があります。</span>
+                                ⚠️ 接続エラー：<br/>{error}<br/><br/>
+                                <span className="opacity-70 font-normal underline">Google AI Studio の「Get API Key」画面でキーが有効か再確認してください。</span>
                             </div>
                         )}
 
@@ -126,7 +132,7 @@
                         )}
                     </main>
                     <footer className="mt-auto p-6 text-center text-slate-400 text-[10px] tracking-widest uppercase">
-                        © 2024 AI Comedy Judge - Final Update
+                        © 2024 AI Comedy Judge - Stable Update
                     </footer>
                 </div>
             );
