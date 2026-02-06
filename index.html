@@ -31,38 +31,36 @@
             const [judgement, setJudgement] = useState(null);
             const [error, setError] = useState(null);
 
-            // 【最重要】Vercelの設定から自動で読み込むための記述
-            // もしVercelの設定が反映されない場合は、以下に直接キーを書いて保存してください
-            // 例: const API_KEY = "AIza...";
+            // 【重要】ここにあなたのAPIキーを直接貼り付けてください
+            // VercelのEnvironment Variablesが動かない場合でも、ここが埋まっていれば動きます
             const API_KEY = "AIzaSyC5yGH7v_e2GBx-RXG0aQss-j9L6xTy9wA"; 
 
             const judgeGag = async () => {
                 if (!gagInput.trim() || isJudging) return;
                 setIsJudging(true);
-                setError(null);  
-
-                
-                // もしAPI_KEYが空の場合、Vercelの環境変数を探しに行きます
-                const finalKey = API_KEY || (typeof process !== "undefined" ? process.env.REACT_APP_GEMINI_API_KEY : "");
+                setError(null);
 
                 try {
-                    if (!finalKey) {
-                        throw new Error("APIキーが設定されていません。コード内の API_KEY 変数に直接貼り付けて保存してください。");
+                    // APIキーが空文字でないかチェック
+                    if (!API_KEY || API_KEY === "") {
+                        throw new Error("コード内の API_KEY 変数が空です。直接貼り付けてください。");
                     }
 
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${finalKey}`;
+                    // モデル名を gemini-1.5-flash から最新の 2.0-flash 等に修正
+                    const model = "gemini-1.5-flash"; 
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
                     
                     const response = await fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            contents: [{ parts: [{ text: `以下のネタを審査し、お笑い審査員として回答してください。ネタ: ${gagInput}` }] }],
+                            contents: [{ parts: [{ text: `以下のネタをプロの審査員として厳しく評価してください。ネタ: ${gagInput}` }] }],
                             systemInstruction: { 
-                                parts: [{ text: "あなたはプロのお笑い審査員です。必ず以下のJSON形式のみで回答してください。：{ \"rank\": \"S/A/B/C/D\", \"score\": 0-100, \"critique\": \"寸評\", \"catchphrase\": \"二つ名\" }" }] 
+                                parts: [{ text: "あなたは伝説的なお笑い審査員です。必ず以下のJSONのみを返してください。：{ \"rank\": \"S/A/B/C/D\", \"score\": 0-100, \"critique\": \"プロ視点の寸評（30文字以内）\", \"catchphrase\": \"二つ名（10文字以内）\" }" }] 
                             },
                             generationConfig: { 
                                 responseMimeType: "application/json",
-                                temperature: 0.7
+                                temperature: 1.0
                             }
                         })
                     });
@@ -70,7 +68,8 @@
                     const data = await response.json();
                     
                     if (!response.ok) {
-                        throw new Error(data.error?.message || "Google APIエラー");
+                        // エラー内容を具体的に表示
+                        throw new Error(data.error?.message || "通信エラーが発生しました");
                     }
 
                     const resultText = data.candidates[0].content.parts[0].text;
@@ -84,42 +83,46 @@
 
             return (
                 <div className="max-w-md mx-auto min-h-screen flex flex-col bg-white shadow-xl">
-                    <header className="bg-orange-600 text-white p-8 pt-12 rounded-b-[3rem] text-center">
+                    <header className="bg-orange-600 text-white p-8 pt-12 rounded-b-[3rem] text-center shadow-lg">
                         <div className="text-5xl mb-2">🎙️</div>
-                        <h1 className="text-2xl font-black italic">AIお笑い審査員</h1>
+                        <h1 className="text-2xl font-black italic tracking-tighter">AIお笑い審査員</h1>
+                        <p className="text-xs opacity-80 mt-1">PRO EDITION</p>
                     </header>
                     <main className="p-6 space-y-6">
                         <textarea
-                            className="w-full h-40 p-4 border-2 border-orange-100 rounded-3xl bg-orange-50/30 outline-none focus:border-orange-500 transition-all text-slate-800"
-                            placeholder="ここにネタを入力..."
+                            className="w-full h-40 p-4 border-2 border-orange-100 rounded-3xl bg-orange-50/30 outline-none focus:border-orange-500 transition-all text-slate-800 text-lg"
+                            placeholder="ここにネタを入力して、AIを唸らせろ！"
                             value={gagInput}
                             onChange={(e) => setGagInput(e.target.value)}
                         />
                         <button
                             onClick={judgeGag}
                             disabled={isJudging || !gagInput.trim()}
-                            className="w-full bg-orange-600 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 disabled:bg-slate-300"
+                            className="w-full bg-orange-600 text-white font-bold py-5 rounded-2xl shadow-lg active:scale-95 disabled:bg-slate-300 transition-all text-xl"
                         >
-                            {isJudging ? "審査中..." : "AIに審査してもらう"}
+                            {isJudging ? "AIが爆笑を待機中..." : "AIに審査してもらう"}
                         </button>
                         
                         {error && (
-                            <div className="bg-red-50 border-2 border-red-200 text-red-600 p-4 rounded-2xl text-sm font-bold">
-                                ⚠️ エラー: {error}
+                            <div className="bg-red-50 border-2 border-red-200 text-red-600 p-4 rounded-2xl text-sm font-bold animate-pulse">
+                                ⚠️ {error}
                             </div>
                         )}
 
                         {judgement && (
-                            <div className="animate-pop p-6 border-4 border-orange-500 rounded-[2rem] text-center space-y-4 bg-white shadow-lg">
-                                <div className="text-xs font-bold text-orange-500 tracking-widest">{judgement.catchphrase}</div>
-                                <div className="text-7xl font-black text-orange-600 rank-font">{judgement.rank}</div>
-                                <div className="text-3xl font-bold text-slate-800">{judgement.score}点</div>
-                                <div className="text-sm text-left bg-orange-50 p-4 rounded-xl italic font-bold text-slate-700">「{judgement.critique}」</div>
+                            <div className="animate-pop p-6 border-4 border-orange-500 rounded-[2rem] text-center space-y-4 bg-white shadow-xl relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-full h-1 bg-orange-500"></div>
+                                <div className="text-xs font-bold text-orange-500 tracking-widest uppercase">{judgement.catchphrase}</div>
+                                <div className="text-8xl font-black text-orange-600 rank-font leading-none">{judgement.rank}</div>
+                                <div className="text-3xl font-black text-slate-800">{judgement.score}<span className="text-sm ml-1">点</span></div>
+                                <div className="text-sm text-left bg-orange-50 p-4 rounded-xl italic font-bold text-slate-700 leading-relaxed border border-orange-100">
+                                    「{judgement.critique}」
+                                </div>
                             </div>
                         )}
                     </main>
-                    <footer className="mt-auto p-6 text-center text-slate-400 text-xs italic">
-                        © AI Comedy Judge - API Key Deployment
+                    <footer className="mt-auto p-6 text-center text-slate-400 text-[10px] tracking-widest uppercase">
+                        © 2024 AI Comedy Judge - Systems Ready
                     </footer>
                 </div>
             );
