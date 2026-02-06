@@ -23,7 +23,7 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState } = React;
 
         const App = () => {
             const [gagInput, setGagInput] = useState('');
@@ -31,22 +31,25 @@
             const [judgement, setJudgement] = useState(null);
             const [error, setError] = useState(null);
 
-            // Vercelに設定した環境変数を読み込む（なければ直接入力用のフォールバック）
-            // ※Vercel公開後は自動的に画像1枚目の設定値が使われます
-            const API_KEY = window.ENV_API_KEY || "";
+            // 【最重要】Vercelの設定から自動で読み込むための記述
+            // もしVercelの設定が反映されない場合は、以下に直接キーを書いて保存してください
+            // 例: const API_KEY = "AIza...";
+            const API_KEY = "AIzaSyC5yGH7v_e2GBx-RXG0aQss-j9L6xTy9wA"; 
 
             const judgeGag = async () => {
                 if (!gagInput.trim() || isJudging) return;
                 setIsJudging(true);
                 setError(null);
 
+                // もしAPI_KEYが空の場合、Vercelの環境変数を探しに行きます
+                const finalKey = API_KEY || (typeof process !== "undefined" ? process.env.REACT_APP_GEMINI_API_KEY : "");
+
                 try {
-                    // APIキーの最終確認
-                    if (!API_KEY || API_KEY === "") {
-                        throw new Error("APIキーが設定されていません。VercelのEnvironment Variablesを確認してください。");
+                    if (!finalKey) {
+                        throw new Error("APIキーが設定されていません。コード内の API_KEY 変数に直接貼り付けて保存してください。");
                     }
 
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${finalKey}`;
                     
                     const response = await fetch(url, {
                         method: 'POST',
@@ -115,7 +118,7 @@
                         )}
                     </main>
                     <footer className="mt-auto p-6 text-center text-slate-400 text-xs italic">
-                        © AI Comedy Judge - API Key Connected via Vercel
+                        © AI Comedy Judge - API Key Deployment
                     </footer>
                 </div>
             );
