@@ -1,0 +1,26 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+<!-- 背景の角丸四角形 -->
+<rect width="512" height="512" rx="100" fill="#F97316"/>
+
+<!-- 王冠（殿堂入りの象徴） -->
+
+<path d="M156 180L200 220L256 140L312 220L356 180V260H156V180Z" fill="#FACC15"/>
+
+<!-- 笑顔の輪郭 -->
+
+<circle cx="256" cy="280" r="120" fill="white"/>
+
+<!-- 目（笑っている表情） -->
+
+<path d="M200 270C200 270 210 255 225 255C240 255 250 270 250 270" stroke="#F97316" stroke-width="12" stroke-linecap="round"/>
+<path d="M262 270C262 270 272 255 287 255C302 255 312 270 312 270" stroke="#F97316" stroke-width="12" stroke-linecap="round"/>
+
+<!-- 大きく笑った口 -->
+
+<path d="M196 310C196 310 220 350 256 350C292 350 316 310 316 310H196Z" fill="#F97316"/>
+
+<!-- 装飾のキラキラ -->
+
+<path d="M400 120L410 150L440 160L410 170L400 200L390 170L360 160L390 150L400 120Z" fill="#FEF3C7"/>
+<path d="M100 380L108 400L128 408L108 416L100 436L92 416L72 408L92 400L100 380Z" fill="#FEF3C7"/>
+</svg>
